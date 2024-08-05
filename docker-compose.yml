@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  api:
+    image: go_api
+    container_name: go_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    env_file:
+      - docker.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - go_api
+    restart: always
+networks:
+  go_api:
+    driver: bridge
