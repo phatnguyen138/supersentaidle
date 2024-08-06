@@ -29,4 +29,7 @@ tmp/
 main
 *templ.go
 
-docker.env
+Dockerfile
+docker-compose*
+.gitignore
+README.md

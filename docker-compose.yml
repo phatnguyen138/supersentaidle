@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   api:
-    image: go_api
-    container_name: go_api
+    image: phatnguyen1812/supersentaidle-api
+    container_name: supersentaidle_api
     build:
       context: .
       dockerfile: Dockerfile
@@ -14,8 +14,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - go_api
+      - supersentaidle_api
     restart: always
 networks:
-  go_api:
+  supersentaidle_api:
     driver: bridge
