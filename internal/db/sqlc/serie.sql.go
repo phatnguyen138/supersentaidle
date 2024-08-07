@@ -7,14 +7,74 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
-const listSeries = `-- name: listSeries :many
-SELECT id, name, year, theme, color_scheme from series
+const addSeries = `-- name: addSeries :one
+INSERT INTO series (name, year, theme, color_scheme)
+VALUES ($1, $2, $3, $4)
+RETURNING id, name, year, theme, color_scheme, image_url
 `
 
-func (q *Queries) listSeries(ctx context.Context) ([]Series, error) {
-	rows, err := q.db.QueryContext(ctx, listSeries)
+type addSeriesParams struct {
+	Name        string
+	Year        int32
+	Theme       sql.NullString
+	ColorScheme sql.NullString
+}
+
+func (q *Queries) addSeries(ctx context.Context, arg addSeriesParams) (Series, error) {
+	row := q.db.QueryRowContext(ctx, addSeries,
+		arg.Name,
+		arg.Year,
+		arg.Theme,
+		arg.ColorScheme,
+	)
+	var i Series
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Year,
+		&i.Theme,
+		&i.ColorScheme,
+		&i.ImageUrl,
+	)
+	return i, err
+}
+
+const getSeriesById = `-- name: getSeriesById :one
+SELECT id, name, year, theme, color_scheme, image_url from series
+WHERE id = $1
+`
+
+func (q *Queries) getSeriesById(ctx context.Context, id int64) (Series, error) {
+	row := q.db.QueryRowContext(ctx, getSeriesById, id)
+	var i Series
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Year,
+		&i.Theme,
+		&i.ColorScheme,
+		&i.ImageUrl,
+	)
+	return i, err
+}
+
+const listSeries = `-- name: listSeries :many
+SELECT id, name, year, theme, color_scheme, image_url from series
+ORDER BY id
+LIMIT $1
+OFFSET $2
+`
+
+type listSeriesParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) listSeries(ctx context.Context, arg listSeriesParams) ([]Series, error) {
+	rows, err := q.db.QueryContext(ctx, listSeries, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -28,6 +88,43 @@ func (q *Queries) listSeries(ctx context.Context) ([]Series, error) {
 			&i.Year,
 			&i.Theme,
 			&i.ColorScheme,
+			&i.ImageUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchSeriesByName = `-- name: searchSeriesByName :many
+SELECT id, name, year, theme, color_scheme, image_url from series
+WHERE name ILIKE '%' || $1 || '%'
+ORDER BY id
+`
+
+func (q *Queries) searchSeriesByName(ctx context.Context, dollar_1 sql.NullString) ([]Series, error) {
+	rows, err := q.db.QueryContext(ctx, searchSeriesByName, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Series
+	for rows.Next() {
+		var i Series
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Year,
+			&i.Theme,
+			&i.ColorScheme,
+			&i.ImageUrl,
 		); err != nil {
 			return nil, err
 		}

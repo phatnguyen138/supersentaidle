@@ -17,6 +17,7 @@ type Character struct {
 	Role             sql.NullString
 	CivilianIdentity sql.NullString
 	SignatureMove    sql.NullString
+	ImageUrl         sql.NullString
 }
 
 type DailyChallenge struct {
@@ -32,6 +33,7 @@ type Mecha struct {
 	Name       string
 	Type       sql.NullString
 	Components sql.NullString
+	ImageUrl   sql.NullString
 }
 
 type Series struct {
@@ -40,6 +42,7 @@ type Series struct {
 	Year        int32
 	Theme       sql.NullString
 	ColorScheme sql.NullString
+	ImageUrl    sql.NullString
 }
 
 type UserProgress struct {
@@ -57,4 +60,5 @@ type Weapon struct {
 	Name      string
 	Type      sql.NullString
 	WielderID sql.NullInt64
+	ImageUrl  sql.NullString
 }

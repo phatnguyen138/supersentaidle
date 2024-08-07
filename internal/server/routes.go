@@ -2,34 +2,25 @@ package server
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/phatnguyen138/supersentaidle/middleware"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
-
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", s.HelloWorldHandler)
 
-	mux.HandleFunc("/health", s.healthHandler)
-	corsMux := middleware.CorsMiddleware(mux)
+	// Create a new ServeMux for API v1
+	api_v1 := http.NewServeMux()
+	api_v1.HandleFunc("/health", s.healthHandler)
 
+	// Apply CORS middleware to the API v1 ServeMux
+	corsMux := middleware.CorsMiddleware(api_v1)
 
-	return corsMux
-}
+	// Register the API v1 ServeMux with the main ServeMux under the /api/v1 prefix
+	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", corsMux))
 
-func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
-	resp := make(map[string]string)
-	resp["message"] = "Hello World"
-
-	jsonResp, err := json.Marshal(resp)
-	if err != nil {
-		log.Fatalf("error handling JSON marshal. Err: %v", err)
-	}
-
-	_, _ = w.Write(jsonResp)
+	return mux
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -43,5 +34,5 @@ func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	_,_ = w.Write(resp)
+	_, _ = w.Write(resp)
 }
